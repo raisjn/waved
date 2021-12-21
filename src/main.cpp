@@ -5,6 +5,7 @@
  */
 
 #include "display.hpp"
+#include "server.cpp"
 #include "waveform_table.hpp"
 #include <iostream>
 #include <fstream>
@@ -15,6 +16,9 @@
 #include <thread>
 #include <chrono>
 #include <random>
+
+
+#define RUN_SERVER // run the server instead of the demo program
 
 void do_init(Display& display)
 {
@@ -347,6 +351,12 @@ int main(int argc, const char** argv)
     };
 
     display.start();
+
+    #ifdef RUN_SERVER
+    do_init(display);
+    run_server(display);
+    return 0;
+    #endif
 
     std::cerr << "[test] Block gradients\n";
     do_init(display);
