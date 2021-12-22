@@ -36,9 +36,8 @@ void do_update(Display &display, const swtfb::swtfb_update &s) {
   // TODO: verify that the rectangle is within SHARED_MEM's bounds, otherwise the server will crash
   for (unsigned int i = 0; i < rect.height; i++) {
     for (unsigned int j = 0; j < rect.width; j++) {
-      // buffer[j + i*rect.width] = SHARED_MEM[j+rect.left + (i+rect.top)*WIDTH];
-      // TODO: get this correct, the gradient is not drawing properly
-      buffer[j + i*rect.width] = uint8_t(to_float(SHARED_MEM[j+rect.left + (i+rect.top)*WIDTH]) * 255);
+      // intensity is from 0 - 30, evens only
+      buffer[j + i*rect.width] = uint8_t(to_float(SHARED_MEM[j+rect.left + (i+rect.top)*WIDTH]) * 15) * 2;
     }
   }
 
