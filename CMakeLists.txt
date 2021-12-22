@@ -43,4 +43,5 @@ if(CMAKE_COMPILER_IS_GNUCC)
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 target_link_libraries(waved Threads::Threads)
+target_link_libraries(waved rt)
 target_include_directories(waved PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src)

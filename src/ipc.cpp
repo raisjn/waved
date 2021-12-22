@@ -67,7 +67,11 @@ static uint16_t *get_shared_buffer(string name = "/swtfb.01") {
   }
   SWTFB_FD = fd;
 
-  ftruncate(fd, BUF_SIZE);
+  if (ftruncate(fd, BUF_SIZE)) {
+    fprintf(stderr, "COULDN'T TRUNCATE SHARED MEM: /dev/shm%s, errno: %i\n",
+            name.c_str(), errno);
+
+  };
   uint16_t *mem =
       (uint16_t *)mmap(NULL, BUF_SIZE, PROT_WRITE, MAP_SHARED, fd, 0);
 

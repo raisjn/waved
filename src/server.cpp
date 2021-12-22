@@ -6,15 +6,42 @@
 #define DEBUG_DIRTY
 int msg_q_id = 0x2257c;
 swtfb::ipc::Queue MSGQ(msg_q_id);
+
+
+uint16_t *SHARED_MEM;
+#define WIDTH 1404
+#define HEIGHT 1872
+
+// convert an RGB565_LE to floating point number
+// TODO: verify this is correct
+constexpr float to_float(uint16_t c)
+{
+    // 0.21 R + 0.72 G + 0.07 B
+    return ((c >> 11) & 31) * (0.21 / 31)  // red
+         + ((c >> 5)  & 63) * (0.72 / 63)  // green
+         + (c         & 31) * (0.07 / 31); // blue
+}
+
 void do_update(Display &display, const swtfb::swtfb_update &s) {
 
   auto mxcfb_update = s.update;
   auto rect = mxcfb_update.update_region;
+  std::vector<Intensity> buffer(rect.width * rect.height);
 
 #ifdef DEBUG_DIRTY
   std::cerr << "Dirty Region: " << rect.left << " " << rect.top << " "
             << rect.width << " " << rect.height << std::endl;
 #endif
+
+  // TODO: verify that the rectangle is within SHARED_MEM's bounds, otherwise the server will crash
+  for (unsigned int i = 0; i < rect.height; i++) {
+    for (unsigned int j = 0; j < rect.width; j++) {
+      // buffer[j + i*rect.width] = SHARED_MEM[j+rect.left + (i+rect.top)*WIDTH];
+      // TODO: get this correct, the gradient is not drawing properly
+      buffer[j + i*rect.width] = uint8_t(to_float(SHARED_MEM[j+rect.left + (i+rect.top)*WIDTH]) * 255);
+    }
+  }
+
 
   // There are three update modes on the rm2. But they are mapped to the five
   // rm1 modes as follows:
@@ -68,9 +95,22 @@ void do_update(Display &display, const swtfb::swtfb_update &s) {
   std::cerr << " flags " << flags << std::endl << std::endl;
 #endif
 
-}
-void run_server(Display &display) {
+  Region region;
+  region.top = rect.top;
+  region.left = rect.left;
+  region.width = rect.width;
+  region.height = rect.height;
 
+  display.push_update(
+    waveform,
+    region,
+    buffer
+  );
+
+}
+
+void run_server(Display &display) {
+  SHARED_MEM = swtfb::ipc::get_shared_buffer();
   while (true) {
     auto buf = MSGQ.recv();
     switch (buf.mtype) {
